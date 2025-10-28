@@ -25,16 +25,9 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 app.post("/ufo/upload", upload.single("file"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send("No file uploaded.");
-  }
-
-  console.log("Received uploaded file:", req.file.originalname);
-
-  const uploadedFilePath = path.join(__dirname, req.file.originalname);
-  fs.writeFileSync(uploadedFilePath, req.file.buffer);
-
-  res.status(200).send("File uploaded successfully.");
+  return res.status(501).send("Not Implemented.");
+  // We don't need this feature/endpoint, it's a backdoor! 
+  // Removing this prevents an attacker to perform a Remote Code Execution
 });
 
 app.post("/ufo", (req, res) => {
@@ -46,9 +39,9 @@ app.post("/ufo", (req, res) => {
   } else if (contentType === "application/xml") {
     try {
       const xmlDoc = libxmljs.parseXml(req.body, {
-        replaceEntities: true,
-        recover: true,
-        nonet: false,
+        replaceEntities: false,
+        recover: false,
+        nonet: true,
       });
 
       console.log("Received XML data from XMLon:", xmlDoc.toString());
@@ -69,16 +62,8 @@ app.post("/ufo", (req, res) => {
         xmlDoc.toString().includes('SYSTEM "') &&
         xmlDoc.toString().includes(".admin")
       ) {
-        extractedContent.forEach((command) => {
-          exec(command, (err, output) => {
-            if (err) {
-              console.error("could not execute command: ", err);
-              return;
-            }
-            console.log("Output: \n", output);
-            res.status(200).set("Content-Type", "text/plain").send(output);
-          });
-        });
+        // Removed the code to execute commands within the .admin file on the server
+        res.status(400).send("Invalid XML");
       } else {
         res
           .status(200)
@@ -86,8 +71,8 @@ app.post("/ufo", (req, res) => {
           .send(extractedContent.join(" "));
       }
     } catch (error) {
-      console.error("XML parsing or validation error:", error.message);
-      res.status(400).send("Invalid XML: " + error.message);
+      console.error("XML parsing or validation error");
+      res.status(400).send("Invalid XML");
     }
   } else {
     res.status(405).send("Unsupported content type");
